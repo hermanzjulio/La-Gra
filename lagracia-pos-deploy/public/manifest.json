@@ -1,0 +1,19 @@
+{
+  "name": "La Gracia POS",
+  "short_name": "La Gracia",
+  "description": "La Gracia Lounge — Offline-first POS & Business Management",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1a1612",
+  "theme_color": "#c9a227",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity", "finance"]
+}

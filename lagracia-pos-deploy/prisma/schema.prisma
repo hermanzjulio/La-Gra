@@ -1,0 +1,160 @@
+// La Gracia Lounge POS — Server-side sync schema
+// Mirrors the local Dexie (IndexedDB) tables so that data from every device
+// is centralized. Used by the Owner Live Dashboard for real-time views.
+//
+// Note: We keep relations minimal (no FK constraints on cross-device IDs)
+// because the local Dexie assigns IDs independently per device and the server
+// is just an aggregator for the owner's live view.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model ServerUser {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  fullName  String
+  role      String   @default("cashier") // owner | manager | cashier | waiter
+  password  String
+  pin       String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ServerCategory {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  icon      String
+  color     String
+  sortOrder Int
+  active    Boolean  @default(true)
+}
+
+model ServerProduct {
+  id          Int      @id @default(autoincrement())
+  name        String
+  categoryId  Int
+  sku         String?
+  price       Float
+  costPrice   Float
+  stock       Float    @default(0)
+  reorderLevel Float   @default(0)
+  unit        String
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ServerCustomer {
+  id            Int      @id @default(autoincrement())
+  name          String
+  phone         String?
+  email         String?
+  creditBalance Float   @default(0)
+  notes         String?
+  createdAt     DateTime @default(now())
+}
+
+model ServerSale {
+  id             Int      @id @default(autoincrement())
+  receiptNo      String   @unique
+  customerId     Int?
+  itemsJson      String   // JSON-serialized SaleItem[]
+  subtotal       Float
+  discount       Float    @default(0)
+  discountType   String   @default("amount")
+  discountValue  Float    @default(0)
+  total          Float
+  cost           Float
+  paymentMethod  String
+  amountPaid     Float
+  change         Float
+  cashierId      Int
+  cashierName    String
+  waiterId       Int?
+  waiterName     String?
+  status         String   @default("completed") // completed | voided
+  voidReason     String?
+  voidApprovedBy Int?
+  voidApprovedByName String?
+  voidedAt       DateTime?
+  deviceId       String?  // which device created this sale
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model ServerPayment {
+  id        Int      @id @default(autoincrement())
+  saleId    Int
+  method    String
+  amount    Float
+  reference String?
+  createdAt DateTime @default(now())
+}
+
+model ServerExpense {
+  id          Int      @id @default(autoincrement())
+  category    String
+  description String?
+  amount      Float
+  paidBy      String?
+  date        String   // YYYY-MM-DD
+  userId      Int?
+  userName    String?
+  createdAt   DateTime @default(now())
+}
+
+model ServerStockMovement {
+  id              Int      @id @default(autoincrement())
+  productId       Int
+  productName     String
+  type            String  // sale | receiving | adjustment | void | wastage
+  quantityChange  Float
+  reason          String?
+  reference       String?
+  supplier        String?
+  invoiceNo       String?
+  costPrice       Float?
+  userId          Int?
+  userName        String?
+  saleId          Int?
+  createdAt       DateTime @default(now())
+}
+
+model ServerAuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  userName  String
+  action    String
+  detail    String
+  entity    String?
+  entityId  String?
+  createdAt DateTime @default(now())
+}
+
+model ServerSession {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  userName    String
+  role        String
+  deviceId    String   @unique // unique per browser/device
+  deviceLabel String?
+  status      String   @default("online") // online | offline
+  lastSeen    DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
+
+model ServerBroadcast {
+  id        Int      @id @default(autoincrement())
+  senderId  Int?
+  senderName String
+  message   String
+  audience  String   @default("all") // all | staff | owner
+  createdAt DateTime @default(now())
+}
